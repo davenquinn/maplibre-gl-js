@@ -227,29 +227,24 @@ class BasicRenderer extends Evented {
       layer &&
       layer._eventedParent.stylesheet.layers.find((x) => x.id === layer.id);
 
-    return Object.keys(this._style._layers);
-
+    //return Object.keys(this._style._layers);
     // Get rid of filtering for now
-    /*
-    return Object.keys(this._style._layers)
-      .filter(
-        (lyr) => this._style.getLayoutProperty(lyr, "visibility") === "visible"
-      )
-      .filter((lyr) => {
-        let layerStylesheet = layerStylesheetFromLayer(
-          this._style._layers[lyr]
-        );
-        return (
-          (!zoom ||
-            (layerStylesheet &&
-              (layerStylesheet.minzoom_ === undefined ||
-                zoom >= layerStylesheet.minzoom_) &&
-              (layerStylesheet.maxzoom_ === undefined ||
-                zoom <= layerStylesheet.maxzoom_))) &&
-          (!source || (layerStylesheet && layerStylesheet.source === source))
-        );
-      });
-    */
+
+    // .filter(
+    //   (lyr) => this._style.getLayoutProperty(lyr, "visibility") === "visible"
+    // )
+    return Object.keys(this._style._layers).filter((lyr) => {
+      let layerStylesheet = layerStylesheetFromLayer(this._style._layers[lyr]);
+      return (
+        (!zoom ||
+          (layerStylesheet &&
+            (layerStylesheet.minzoom_ === undefined ||
+              zoom >= layerStylesheet.minzoom_) &&
+            (layerStylesheet.maxzoom_ === undefined ||
+              zoom <= layerStylesheet.maxzoom_))) &&
+        (!source || (layerStylesheet && layerStylesheet.source === source))
+      );
+    });
   }
 
   getLayerOriginalFilter(layerName) {
@@ -285,6 +280,7 @@ class BasicRenderer extends Evented {
   }
 
   _cancelAllPendingRenders() {
+    return;
     this._pendingRenders.forEach((s) =>
       this._finishRender(s.tileSetID, s.renderId, "canceled")
     );
@@ -361,6 +357,8 @@ class BasicRenderer extends Evented {
       return; // tile was already rendered
     }
 
+    return;
+
     renderRef.consumer.next("canceled");
     let idx = state.consumers.indexOf(renderRef.consumer);
     idx !== -1 && state.consumers.splice(idx, 1);
@@ -420,12 +418,12 @@ class BasicRenderer extends Evented {
     // once all the tiles are loaded we can then execute the pending render...
     let badTileIdxs = [];
     Promise.all(
-      state.tiles.map((t, ii) =>
-        t.loadedPromise.catch((err) => {
-          //console.log("Found bad tile", t, err);
+      state.tiles.map((t, ii) => {
+        return t.loadedPromise.catch((err) => {
+          console.log("Found bad tile", t, err);
           badTileIdxs.push(ii);
-        })
-      )
+        });
+      })
     )
       .catch((err) => {
         //console.log("Caught error!");
@@ -489,7 +487,7 @@ class BasicRenderer extends Evented {
           .map((c) => c.drawSpec.srcTop + c.drawSpec.height)
           .reduce((a, b) => Math.max(a, b), -Infinity);
 
-        //console.log("Still going");
+        console.log("Still going");
 
         // iterate over OFFSCREEN_CANV_SIZE x OFFSCREEN_CANV_SIZE blocks of that bounding box
         for (let xx = xSrcMin; xx < xSrcMax; xx += OFFSCREEN_CANV_SIZE) {
@@ -554,15 +552,15 @@ class BasicRenderer extends Evented {
                 (c.drawSpec.srcTop < yy ? yy - c.drawSpec.srcTop : 0);
               let width = srcRight - srcLeft;
               let height = srcBottom - srcTop;
-              //console.log("Drawing image for lyr", tileSetID);
-              // console.log({
-              //   srcLeft,
-              //   srcTop,
-              //   width,
-              //   height,
-              //   destLeft,
-              //   destTop,
-              // });
+              console.log("Drawing image for lyr", tileSetID);
+              console.log({
+                srcLeft,
+                srcTop,
+                width,
+                height,
+                destLeft,
+                destTop,
+              });
               c.ctx.drawImage(
                 this._canvas,
                 srcLeft,
