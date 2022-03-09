@@ -606,43 +606,41 @@ class Transform {
     }
 
     identityPosMatrix(unwrappedTileID: UnwrappedTileID, aligned: boolean = false): mat4 {
-        const OFFSCREEN_CANV_SIZE = 1024
-        const tileSize = 512
-        var translate = (a, v) => {
-            const _tmpMat4f64b = new Float32Array(16);
-            mat4.identity(_tmpMat4f64b);
-            mat4.translate(_tmpMat4f64b, _tmpMat4f64b, v);
-            mat4.multiply(a, _tmpMat4f64b, a);
-        };
-        var scale = (a, v) => {
+      const OFFSCREEN_CANV_SIZE = 1024;
+      const tileSize = 512;
+      var translate = (a, v) => {
         const _tmpMat4f64b = new Float32Array(16);
-            mat4.identity(_tmpMat4f64b);
-            mat4.scale(_tmpMat4f64b, _tmpMat4f64b, v);
-            mat4.multiply(a, _tmpMat4f64b, a);
-        };
+        mat4.identity(_tmpMat4f64b);
+        mat4.translate(_tmpMat4f64b, _tmpMat4f64b, v);
+        mat4.multiply(a, _tmpMat4f64b, a);
+      };
+      var scale = (a, v) => {
+        const _tmpMat4f64b = new Float32Array(16);
+        mat4.identity(_tmpMat4f64b);
+        mat4.scale(_tmpMat4f64b, _tmpMat4f64b, v);
+        mat4.multiply(a, _tmpMat4f64b, a);
+      };
 
-        const _tmpMat4f64 = new Float64Array(16); // reuse each time for GC's benefit
-        const _tmpMat4f32 = new Float32Array(16); // TODO(optimization): may want to use a pool for this rather than a new one each time
+      const _tmpMat4f64 = new Float64Array(16); // reuse each time for GC's benefit
+      const _tmpMat4f32 = new Float32Array(16); // TODO(optimization): may want to use a pool for this rather than a new one each time
 
-        // The main calculation...
-        // @ts-ignore
-        mat4.identity(_tmpMat4f64);
-        let factor = tileSize / OFFSCREEN_CANV_SIZE;
-        scale(_tmpMat4f64, [(2 / EXTENT) * factor, (-2 / EXTENT) * factor, 1]);
-        // translate(_tmpMat4f64, [
-        //     -1 + (2 * transX) / OFFSCREEN_CANV_SIZE,
-        //     1 - (2 * transY) / OFFSCREEN_CANV_SIZE,
-        //     0,
-        // ]);
+      // The main calculation...
+      // @ts-ignore
+      mat4.identity(_tmpMat4f64);
+      let factor = tileSize / OFFSCREEN_CANV_SIZE;
+      scale(_tmpMat4f64, [(2 / EXTENT) * factor, (-2 / EXTENT) * factor, 1]);
+      // translate(_tmpMat4f64, [
+      //     -1 + (2 * transX) / OFFSCREEN_CANV_SIZE,
+      //     1 - (2 * transY) / OFFSCREEN_CANV_SIZE,
+      //     0,
+      // ]);
 
-        translate(_tmpMat4f64, [-1, 1, 0]);
-        
-        console.log(_tmpMat4f64)
+      translate(_tmpMat4f64, [-1, 1, 0]);
 
+      //console.log(_tmpMat4f64);
 
-        return new Float32Array(_tmpMat4f64);
-        return cache[posMatrixKey];
-
+      return new Float32Array(_tmpMat4f64);
+      //return cache[posMatrixKey];
     }
 
     customLayerMatrix(): mat4 {
