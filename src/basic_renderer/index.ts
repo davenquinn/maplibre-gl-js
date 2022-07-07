@@ -12,6 +12,8 @@ import isSupported from "@mapbox/mapbox-gl-supported";
 import { RequestManager } from "../util/request_manager";
 import { getImage, getJSON, ResourceType } from '../util/ajax';
 import Transform from "../geo/transform";
+import type { StyleOptions, StyleSetterOptions } from '../style/style';
+import type {StyleSpecification} from '../style-spec/types';
 
 const DEFAULT_RESOLUTION = 256;
 const OFFSCREEN_CANV_SIZE = 1024;
@@ -195,6 +197,86 @@ class BasicRenderer extends Evented {
       ? this._processConfigQueue(++this._configId)
       : () => this._processConfigQueue(++this._configId);
   }
+
+  // Yanked directly from maplibre's Map object
+  setStyle(style: StyleSpecification | string | null, options?: {
+    diff?: boolean;
+  } & StyleOptions) {
+      options = extend({}, {localIdeographFontFamily: this._localIdeographFontFamily}, options);
+
+      if ((options.diff !== false && options.localIdeographFontFamily === this._localIdeographFontFamily) && this._style && style) {
+          this._diffStyle(style, options);
+          return this;
+      } else {
+          this._localIdeographFontFamily = options.localIdeographFontFamily;
+          return this._updateStyle(style, options);
+      }
+  }
+
+  _updateStyle(style: StyleSpecification | string | null,  options?: {
+    diff?: boolean;
+  } & StyleOptions) {
+      if (this.style) {
+          this.style.setEventedParent(null);
+          this.style._remove();
+      }
+
+      if (!style) {
+          delete this.style;
+          return this;
+      } else {
+          this.style = new BasicStyle(this, options || {});
+      }
+
+      this.style.setEventedParent(this, {style: this._style});
+
+      if (typeof style === 'string') {
+          this._style.loadURL(style);
+      } else {
+          this._style.loadJSON(style);
+      }
+
+      return this;
+  }
+
+    _diffStyle(style: StyleSpecification | string,  options?: {
+      diff?: boolean;
+    } & StyleOptions) {
+        if (typeof style === 'string') {
+            const url = style;
+            const request = this._requestManager.transformRequest(url, ResourceType.Style);
+            getJSON(request, (error?: Error | null, json?: any | null) => {
+                if (error) {
+                    this.fire(new ErrorEvent(error));
+                } else if (json) {
+                    this._updateDiff(json, options);
+                }
+            });
+        } else if (typeof style === 'object') {
+            this._updateDiff(style, options);
+        }
+    }
+
+    _updateDiff(style: StyleSpecification,  options?: {
+      diff?: boolean;
+    } & StyleOptions) {
+        try {
+            if (this._style.setState(style)) {
+                this._update(true);
+            }
+        } catch (e) {
+            console.warn(
+                `Unable to perform style diff: ${e.message || e.error || e}.  Rebuilding the style from scratch.`
+            );
+            this._updateStyle(style, options);
+        }
+    }
+  
+    _update(updateStyle?: boolean) {
+        if (!this._style) return this;
+        this.onRepaint();
+        return this;
+    }
 
   _processConfigQueue(calledByConfigId) {
     // only the most recently submitted configId is allowed to actually
@@ -486,8 +568,6 @@ class BasicRenderer extends Evented {
         let ySrcMax = state.consumers
           .map((c) => c.drawSpec.srcTop + c.drawSpec.height)
           .reduce((a, b) => Math.max(a, b), -Infinity);
-
-        console.log("Still going");
 
         // iterate over OFFSCREEN_CANV_SIZE x OFFSCREEN_CANV_SIZE blocks of that bounding box
         for (let xx = xSrcMin; xx < xSrcMax; xx += OFFSCREEN_CANV_SIZE) {
