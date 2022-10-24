@@ -8,7 +8,13 @@ class GeoJSONFeature {
 
     _vectorTileFeature: VectorTileFeature;
 
-    constructor(vectorTileFeature: VectorTileFeature, z: number, x: number, y: number, id: string | number | void) {
+    constructor(
+        vectorTileFeature: VectorTileFeature,
+        z: number,
+        x: number,
+        y: number,
+        id: string | number | void
+    ) {
         this.type = 'Feature';
 
         this._vectorTileFeature = vectorTileFeature;
@@ -25,7 +31,8 @@ class GeoJSONFeature {
             this._geometry = this._vectorTileFeature.toGeoJSON(
                 (this._vectorTileFeature as any)._x,
                 (this._vectorTileFeature as any)._y,
-                (this._vectorTileFeature as any)._z).geometry;
+                (this._vectorTileFeature as any)._z
+            ).geometry;
         }
         return this._geometry;
     }
@@ -35,11 +42,11 @@ class GeoJSONFeature {
     }
 
     toJSON() {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { _geometry, _vectorTileFeature, ...json } = this;
-      // @ts-ignore
-      json.geometry = this.geometry;
-      return json;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const {_geometry, _vectorTileFeature, ...json} = this;
+        // @ts-ignore
+        json.geometry = this.geometry;
+        return json;
     }
 }
 
